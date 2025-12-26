@@ -76,7 +76,7 @@ async def funds(interaction: discord.Interaction, address: str = None):
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 async def support(interaction: discord.Interaction):
 
-    await interaction.resonpse.send.send_message("To support me, you can fund the creation of this bot or literally just use it so it gains traction. LTC Wallet: ltc1qq2mdrgw9svx8y2x0rd5mrmyv58r2g0psssvw3m")
+    await interaction.response.send_message("To support me, you can fund the creation of this bot or literally just use it so it gains traction. LTC Wallet: ltc1qq2mdrgw9svx8y2x0rd5mrmyv58r2g0psssvw3m")
 
 @bot.tree.command(name="price", description="Check the price of litecoin in the current market")
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
@@ -94,6 +94,43 @@ async def price(interaction: discord.Interaction):
             current_price = data["litecoin"]["usd"]
 
             await interaction.response.send_message(f"The current price of litecoin is {current_price}")
+
+@bot.tree.command(name="base64encode", description="Encodes something into the base64 format")
+@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+async def base64encode(interaction: discord.Interaction, data: str):
+
+    url = "https://aisenseapi.com/services/v1/base64_encode"
+
+    payload = {"data": data}
+
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Accept-Encoding": "identity"
+    }
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, json=payload, headers=headers) as resp:
+            if resp.status != 200:
+                await interaction.response.send_message("API Error")
+                return
+
+            try:
+                response_data = await resp.json()
+            except Exception:
+                text = await resp.text()
+                await interaction.response.send_message(
+                    f"Invalid API response:\n{text[:500]}"
+                )
+                return
+
+            encoded = response_data.get("encoded")
+
+            if not encoded:
+                await interaction.response.send_message("Unexpected API response")
+                return
+
+            await interaction.response.send_message(encoded)
 
 @bot.tree.command(name="userinfo", description="Displays a users discord information")
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
